@@ -11,6 +11,7 @@ env:
  AWS_REGION: ap-south-1
  AWS_ACCOUNT_ID: 012889719104
  ECR_REPOSITORY: api-flask-repo
+ API_FLASK_REPO: 012889719104.dkr.ecr.ap-south-1.amazonaws.com/patient-service
  GITHUB_OIDC_ROLE: arn:aws:iam::012889719104:role/oidc_role
  
 jobs:
@@ -24,13 +25,18 @@ jobs:
        with:
          role-to-assume: ${{ env.GITHUB_OIDC_ROLE }}
          aws-region: ${{ env.AWS_REGION }}
-     - name: Login to Amazon ECR
-       uses: aws-actions/amazon-ecr-login@v2
+     # - name: Login to Amazon ECR
+     #   uses: aws-actions/amazon-ecr-login@v2
+     - name: Login to ECR 
+       run: |
+         aws ecr get-login-password --region $AWS_REGION | \
+         docker login --username AWS --password-stdin $API_FLASK_REPO
      - name: Build, tag & push Docker image
        run: |
          IMAGE_URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}
          # Build with commit SHA  
          docker build -t ${{ env.ECR_REPOSITORY }}:${{ github.sha }} ./Api-Flask 
+         
          # Tag as :latest and :<commit-sha>  
          docker tag ${{ env.ECR_REPOSITORY }}:${{ github.sha }} $IMAGE_URI:latest
          docker tag ${{ env.ECR_REPOSITORY }}:${{ github.sha }} $IMAGE_URI:${{ github.sha }}
