@@ -44,9 +44,10 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           # Build with the correct context where your Dockerfile actually lives:
-          docker build \
-            -t $IMAGE_REPO:$IMAGE_TAG \
-            ./Api-Flask
+          # docker build \
+          #   -t $IMAGE_REPO:$IMAGE_TAG \
+          #   ./Api-Flask
+          docker build -t api-flask:latest -f ./Api-Flask
 
           # Tag both "latest" and the commit SHA
           docker tag api-flask:latest 012889719104.dkr.ecr.ap-south-1.amazonaws.com/api-flask-repo:latest
