@@ -11,7 +11,8 @@ env:
  AWS_REGION: ap-south-1
  AWS_ACCOUNT_ID: 012889719104
  ECR_REPOSITORY: api-flask-repo
- GITHUB_OIDC_ROLE: arn:aws:iam::012889719104:role/GitHubActionsRole
+ GITHUB_OIDC_ROLE: arn:aws:iam::012889719104:role/oidc_role
+ 
 jobs:
  build-and-deploy:
    runs-on: ubuntu-latest
