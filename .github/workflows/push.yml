@@ -30,7 +30,7 @@ jobs:
        run: |
          IMAGE_URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}
          # Build with commit SHA  
-         docker build -t ${{ env.ECR_REPOSITORY }}:${{ github.sha }} .
+         docker build -t ${{ env.ECR_REPOSITORY }}:${{ github.sha }} -f /Api-Flask .
          # Tag as :latest and :<commit-sha>  
          docker tag ${{ env.ECR_REPOSITORY }}:${{ github.sha }} $IMAGE_URI:latest
          docker tag ${{ env.ECR_REPOSITORY }}:${{ github.sha }} $IMAGE_URI:${{ github.sha }}
