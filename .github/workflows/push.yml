@@ -53,8 +53,9 @@ jobs:
           docker tag $IMAGE_REPO:$IMAGE_TAG $IMAGE_REGISTRY/$IMAGE_REPO:$IMAGE_TAG
 
           # Push to ECR
-          docker push $IMAGE_REGISTRY/$IMAGE_REPO:latest
-          docker push $IMAGE_REGISTRY/$IMAGE_REPO:$IMAGE_TAG
+          docker push 012889719104.dkr.ecr.ap-south-1.amazonaws.com/api-flask-repo:latest
+          # docker push $IMAGE_REGISTRY/$IMAGE_REPO:latest
+          # docker push $IMAGE_REGISTRY/$IMAGE_REPO:$IMAGE_TAG
 
       # 5) Terraform: install, init, apply
       - name: Setup Terraform
