@@ -1,55 +1,68 @@
 name: CI/CD Pipeline
+
 on:
   workflow_dispatch:
- # push:
- #   branches:
- #     - main
+  # push:
+  #   branches:
+  #     - main
+
 permissions:
- id-token: write
- contents: read
+  # needed for OIDC → AWS
+  id-token: write
+  contents: read
+
 env:
- AWS_REGION: ap-south-1
- AWS_ACCOUNT_ID: 012889719104
- ECR_REPOSITORY: api-flask-repo
- API_FLASK_REPO: 012889719104.dkr.ecr.ap-south-1.amazonaws.com/api-flask-repo
- GITHUB_OIDC_ROLE: arn:aws:iam::012889719104:role/oidc_role
- 
+  AWS_REGION: ap-south-1
+  AWS_ACCOUNT_ID: 012889719104
+  ECR_REPOSITORY: api-flask-repo
+  GITHUB_OIDC_ROLE: arn:aws:iam::012889719104:role/oidc_role
+
 jobs:
- build-and-deploy:
-   runs-on: ubuntu-latest
-   steps:
-     - name: Checkout code
-       uses: actions/checkout@v3
-     - name: Configure AWS credentials via OIDC
-       uses: aws-actions/configure-aws-credentials@v2
-       with:
-         role-to-assume: ${{ env.GITHUB_OIDC_ROLE }}
-         aws-region: ${{ env.AWS_REGION }}
+  build-and-deploy:
+    runs-on: ubuntu-latest
 
-     # - name: Login to Amazon ECR
-     #   uses: aws-actions/amazon-ecr-login@v2
-     - name: Login to ECR 
-       run: |
-          aws ecr get-login-password --region $AWS_REGION | \
-              docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-     - name: Build, tag & push Docker image
-       run: |
-         IMAGE_URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}
-         # Build with commit SHA  
-         docker build -t ${{ env.ECR_REPOSITORY }}:${{ github.sha }} ./Api-Flask 
-         
-         # Tag as :latest and :<commit-sha>  
-         docker tag ${{ env.ECR_REPOSITORY }}:${{ github.sha }} $IMAGE_URI:latest
-         docker tag ${{ env.ECR_REPOSITORY }}:${{ github.sha }} $IMAGE_URI:${{ github.sha }}
-         # Push both tags  
-         docker push $IMAGE_URI:latest
-         docker push $IMAGE_URI:${{ github.sha }}
-     - name: Setup Terraform
-       uses: hashicorp/setup-terraform@v2
-     - name: Terraform Init
-       run: terraform init
-       working-directory: ./terraform
-     - name: Terraform Apply
-       run: terraform apply -auto-approve
-       working-directory: ./terraform
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ env.GITHUB_OIDC_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS identity & ECR access
+        run: |
+          echo "Caller Identity:"
+          aws sts get-caller-identity
+          echo "Listing ECR repos:"
+          aws ecr describe-repositories --repository-names $ECR_REPOSITORY
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag & push Docker image
+        run: |
+          IMAGE_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}
+          
+          # Build from the Api-Flask folder context (where your Dockerfile lives)
+          docker build -t ${ECR_REPOSITORY}:${GITHUB_SHA} ./Api-Flask
+
+          # Tag both :latest and the SHA
+          docker tag ${ECR_REPOSITORY}:${GITHUB_SHA} ${IMAGE_URI}:latest
+          docker tag ${ECR_REPOSITORY}:${GITHUB_SHA} ${IMAGE_URI}:${GITHUB_SHA}
+
+          # Push to ECR
+          docker push ${IMAGE_URI}:latest
+          docker push ${IMAGE_URI}:${GITHUB_SHA}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: ./terraform
+        run: terraform apply -auto-approve
