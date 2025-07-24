@@ -34,7 +34,6 @@ jobs:
           docker login --username AWS --password-stdin $API_FLASK_REPO
 
       - name: Build Docker image 
-        working-directory: ./application/api-flask-repo
         run: |
           docker build -t api-flask:latest .
 
