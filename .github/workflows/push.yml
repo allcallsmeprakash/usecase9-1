@@ -47,7 +47,10 @@ jobs:
           # docker build \
           #   -t $IMAGE_REPO:$IMAGE_TAG \
           #   ./Api-Flask
-          docker build -t api-flask:latest -f ./Api-Flask
+          docker build \
+          -f Api-Flask/Dockerfile \
+          -t 012889719104.dkr.ecr.ap-south-1.amazonaws.com/api-flask-repo:latest \
+          Api-Flask
 
           # Tag both "latest" and the commit SHA
           docker tag api-flask:latest 012889719104.dkr.ecr.ap-south-1.amazonaws.com/api-flask-repo:latest
