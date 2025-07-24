@@ -1,75 +1,56 @@
-# .github/workflows/ci-cd.yml
-name: CI/CD Pipeline
+name: Build and Deploy to AWS
 
 on:
-  push:
-    branches:
-      - main
-
-permissions:
-  id-token: write       # for OIDC → AWS
-  contents: read        # to checkout your repo
+  # push:
+    # branches: [main]
+  workflow_dispatch:
 
 env:
   AWS_REGION: ap-south-1
-  AWS_ACCOUNT_ID: 012889719104
-  ECR_REPOSITORY: api-flask-repo
-  GITHUB_OIDC_ROLE: arn:aws:iam::012889719104:role/oidc_role
+  EKS_REPO: 012889719104.dkr.ecr.ap-south-1.amazonaws.com/api-flask-repo
+
+permissions:
+  id-token: write
+  contents: write
 
 jobs:
-  build-and-deploy:
+  build-push-deploy:
     runs-on: ubuntu-latest
 
-    steps:
-      # 1) Grab your code
-      - name: Checkout code
-        uses: actions/checkout@v3
+    defaults:
+      run:
+        working-directory: usecase9
 
-      # 2) Assume your GitHub-OIDC role in AWS
-      - name: Configure AWS credentials via OIDC
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # OIDC AWS creds
+      - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ env.GITHUB_OIDC_ROLE }}
+          role-to-assume: arn:aws:iam::012889719104:role/oidc_role
           aws-region: ${{ env.AWS_REGION }}
 
-      # # 3) Login to ECR (this action does `get-login-password | docker login` for you)
-      # - name: Login to Amazon ECR
-      #   uses: aws-actions/amazon-ecr-login@v2
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
-      # # 4) Build, tag & push your image
-      # - name: Build, tag & push Docker image
-      #   env:
-      #     IMAGE_REGISTRY: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
-      #     IMAGE_REPO: ${{ env.ECR_REPOSITORY }}
-      #     IMAGE_TAG: ${{ github.sha }}
-      #   run: |
-      #     # Build with the correct context where your Dockerfile actually lives:
-      #     # docker build \
-      #     #   -t $IMAGE_REPO:$IMAGE_TAG \
-      #     #   ./Api-Flask
-      #     docker build \
-      #     -f Api-Flask/Dockerfile \
-      #     -t 012889719104.dkr.ecr.ap-south-1.amazonaws.com/api-flask-repo:latest \
-      #     Api-Flask
+      # Patient Service build & push
+      - name: Build eks Docker image
+        run: |
+          docker build -t $EKS_REPO:latest ./Api-Flask
+          docker push $EKS_REPO:latest
 
-      #     # Tag both "latest" and the commit SHA
-      #     docker tag api-flask:latest 012889719104.dkr.ecr.ap-south-1.amazonaws.com/api-flask-repo:latest
-      #     # docker tag $IMAGE_REPO:$IMAGE_TAG $IMAGE_REGISTRY/$IMAGE_REPO:latest
-      #     # docker tag $IMAGE_REPO:$IMAGE_TAG $IMAGE_REGISTRY/$IMAGE_REPO:$IMAGE_TAG
 
-      #     # Push to ECR
-      #     docker push 012889719104.dkr.ecr.ap-south-1.amazonaws.com/api-flask-repo:latest
-      #     # docker push $IMAGE_REGISTRY/$IMAGE_REPO:latest
-      #     # docker push $IMAGE_REGISTRY/$IMAGE_REPO:$IMAGE_TAG
-
-      # 5) Terraform: install, init, apply
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+      # Terraform deploy
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: ./terraform
-        run: terraform init
+        run: terraform init -reconfigure
+
+      - name: Terraform Plan
+        run: terraform plan
 
       - name: Terraform Apply
-        working-directory: ./terraform
         run: terraform apply -auto-approve
