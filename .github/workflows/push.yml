@@ -1,15 +1,14 @@
+# .github/workflows/ci-cd.yml
 name: CI/CD Pipeline
 
 on:
-  workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
 
 permissions:
-  # needed for OIDC → AWS
-  id-token: write
-  contents: read
+  id-token: write       # for OIDC → AWS
+  contents: read        # to checkout your repo
 
 env:
   AWS_REGION: ap-south-1
@@ -22,40 +21,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1) Grab your code
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2) Assume your GitHub-OIDC role in AWS
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ env.GITHUB_OIDC_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Verify AWS identity & ECR access
-        run: |
-          echo "Caller Identity:"
-          aws sts get-caller-identity
-          echo "Listing ECR repos:"
-          aws ecr describe-repositories --repository-names $ECR_REPOSITORY
-
+      # 3) Login to ECR (this action does `get-login-password | docker login` for you)
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
+      # 4) Build, tag & push your image
       - name: Build, tag & push Docker image
+        env:
+          IMAGE_REGISTRY: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          IMAGE_REPO: ${{ env.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          IMAGE_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}
-          
-          # Build from the Api-Flask folder context (where your Dockerfile lives)
-          docker build -t ${ECR_REPOSITORY}:${GITHUB_SHA} ./Api-Flask
+          # Build with the correct context where your Dockerfile actually lives:
+          docker build \
+            -t $IMAGE_REPO:$IMAGE_TAG \
+            ./Api-Flask
 
-          # Tag both :latest and the SHA
-          docker tag ${ECR_REPOSITORY}:${GITHUB_SHA} ${IMAGE_URI}:latest
-          docker tag ${ECR_REPOSITORY}:${GITHUB_SHA} ${IMAGE_URI}:${GITHUB_SHA}
+          # Tag both "latest" and the commit SHA
+          docker tag $IMAGE_REPO:$IMAGE_TAG $IMAGE_REGISTRY/$IMAGE_REPO:latest
+          docker tag $IMAGE_REPO:$IMAGE_TAG $IMAGE_REGISTRY/$IMAGE_REPO:$IMAGE_TAG
 
           # Push to ECR
-          docker push ${IMAGE_URI}:latest
-          docker push ${IMAGE_URI}:${GITHUB_SHA}
+          docker push $IMAGE_REGISTRY/$IMAGE_REPO:latest
+          docker push $IMAGE_REGISTRY/$IMAGE_REPO:$IMAGE_TAG
 
+      # 5) Terraform: install, init, apply
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
