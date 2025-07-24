@@ -1,0 +1,60 @@
+
+name: Build & Deploy Docker Images to ECR and Terraform Deploy
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+
+env:
+  AWS_REGION: ap-south-1
+  API_FLASK_REPO: 012889719104.dkr.ecr.ap-south-1.amazonaws.com/patient-service
+
+jobs:
+  build-push-and-terraform:
+    name: Build & Push Docker Images, Then Deploy Terraform
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::012889719104:role/oidc_role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR 
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | \
+          docker login --username AWS --password-stdin $API_FLASK_REPO
+
+      - name: Build Docker image 
+        working-directory: ./application/api-flask-repo
+        run: |
+          docker build -t api-flask:latest .
+
+      - name: Tag Docker image 
+        run: |
+          docker tag api-flask:latest 012889719104.dkr.ecr.ap-south-1.amazonaws.com/api-flask-repo:latest
+
+      - name: Push Docker image to ECR (appointment-service)
+        run: |
+          docker push 012889719104.dkr.ecr.ap-south-1.amazonaws.com/api-flask-repo:latest
+
+      ### TERRAFORM DEPLOY ###
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init -reconfigure
+
+      - name: Terraform Plan
+        run: terraform plan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
