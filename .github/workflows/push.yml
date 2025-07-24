@@ -6,8 +6,9 @@ on:
   workflow_dispatch:
 
 permissions:
+  contents: write
+  pull-requests: write
   id-token: write
-  contents: read
 
 env:
   AWS_REGION: ap-south-1
