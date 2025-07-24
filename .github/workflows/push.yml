@@ -14,42 +14,42 @@ env:
   AWS_REGION: ap-south-1
 
 jobs:
-  # build-push-Flask-app:
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     IMAGE_NAME_FLASK: api-flask-repo
-  #     AWS_REGION: ap-south-1
-  #     DOCKER_DIR_FLASK: Api-Flask
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
+  build-push-Flask-app:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME_FLASK: api-flask-repo
+      AWS_REGION: ap-south-1
+      DOCKER_DIR_FLASK: Api-Flask
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v4
-  #       with:
-  #         role-to-assume: arn:aws:iam::012889719104:role/oidc_role
-  #         aws-region: ap-south-1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::012889719104:role/oidc_role
+          aws-region: ap-south-1
 
-  #     - name: Login to Amazon ECR
-  #       id: login-ecr
-  #       uses: aws-actions/amazon-ecr-login@v2
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-  #     - name: Ensure ECR Repositories Exist
-  #       run: |
-  #         aws ecr describe-repositories --repository-names "$IMAGE_NAME_FLASK" || \
-  #         aws ecr create-repository --repository-name "$IMAGE_NAME_FLASK"
-  #     - name: Build Flask Docker image
-  #       run: docker build -t $IMAGE_NAME_FLASK -f ${{ env.DOCKER_DIR_FLASK }}/Dockerfile ${{ env.DOCKER_DIR_FLASK }}
+      - name: Ensure ECR Repositories Exist
+        run: |
+          aws ecr describe-repositories --repository-names "$IMAGE_NAME_FLASK" || \
+          aws ecr create-repository --repository-name "$IMAGE_NAME_FLASK"
+      - name: Build Flask Docker image
+        run: docker build -t $IMAGE_NAME_FLASK -f ${{ env.DOCKER_DIR_FLASK }}/Dockerfile ${{ env.DOCKER_DIR_FLASK }}
       
-  #     - name: Tag Flask Docker image
-  #       run: |
-  #         ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
-  #         docker tag $IMAGE_NAME_FLASK:latest $ECR_REGISTRY/$IMAGE_NAME_FLASK:v1
+      - name: Tag Flask Docker image
+        run: |
+          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          docker tag $IMAGE_NAME_FLASK:latest $ECR_REGISTRY/$IMAGE_NAME_FLASK:v1
       
-  #     - name: Push Flask Docker image to ECR
-  #       run: |
-  #         ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
-  #         docker push $ECR_REGISTRY/$IMAGE_NAME_FLASK:v1
+      - name: Push Flask Docker image to ECR
+        run: |
+          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          docker push $ECR_REGISTRY/$IMAGE_NAME_FLASK:v1
 
   terraform:
     name: "Terraform"
