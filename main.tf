@@ -45,4 +45,8 @@ module "helm" {
   vpc_id                             = module.vpc.vpc_id
   region                             = var.region
   #depends_on = [module.eks]
+  providers = {
+    kubernetes = kubernetes.eks
+    helm       = helm.eks
+  }
 }
