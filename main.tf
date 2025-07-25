@@ -19,7 +19,7 @@ module "eks" {
   cluster_role_arn            = var.eks_cluster_role_arn
   node_role_arn               = var.eks_node_role_arn
   eks_oidc_root_ca_thumbprint = var.eks_oidc_root_ca_thumbprint
-  cluster_role_dependency     = module.iam.eks_role_depends_on
+  #cluster_role_dependency     = module.iam.eks_role_depends_on
   vpc_id                      = module.vpc.vpc_id
   depends_on = [module.vpc]
 }
@@ -32,7 +32,7 @@ resource "kubernetes_config_map" "aws_auth" {
   }
   data = {
     mapRoles = <<YAML
-- rolearn: ${module.iam.eks_node_role_arn}
+- rolearn: arn:aws:iam::012889719104:role/admin_role
   username: system:node:{{EC2PrivateDNSName}}
   groups:
     - system:bootstrappers
@@ -64,8 +64,8 @@ module "helm" {
   cluster_id                         = module.eks.cluster_id
   #cluster_endpoint                   = module.eks.cluster_endpoint
   #cluster_certificate_authority_data = module.eks.cluster_certificate_authority_data
-  lbc_iam_depends_on                 = module.iam.lbc_iam_depends_on
-  lbc_iam_role_arn                   = module.iam.lbc_iam_role_arn
+  #lbc_iam_depends_on                 = module.iam.lbc_iam_depends_on
+  lbc_iam_role_arn                   = var.lbc_iam_role_arn
   vpc_id                             = module.vpc.vpc_id
   region                             = var.region
   #depends_on = [module.eks]
