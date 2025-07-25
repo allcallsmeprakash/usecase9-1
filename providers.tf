@@ -45,7 +45,7 @@ provider "kubernetes" {
                                .certificate_authority[0].data
                            )
   token                  = data.aws_eks_cluster_auth.cluster.token
-  load_config_file       = false
+
 }
 
 # 3) Helm provider, pointed at that same Kubernetes provider
@@ -59,6 +59,6 @@ provider "helm" {
                                  .certificate_authority[0].data
                              )
     token                  = data.aws_eks_cluster_auth.cluster.token
-    load_config_file       = false
+
   }
 }
