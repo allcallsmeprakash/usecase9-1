@@ -30,4 +30,12 @@ variable "eks_oidc_root_ca_thumbprint" {
   description = "eks_oidc_root_ca_thumbprint"
   type        = string
 }
+variable "eks_cluster_role_arn" {
+  description = "eks_oidc_root_ca_thumbprint"
+  type        = string
+}
+variable "eks_node_role_arn" {
+  description = "eks_oidc_root_ca_thumbprint"
+  type        = string
+}
 
