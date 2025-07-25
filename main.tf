@@ -22,6 +22,7 @@ module "eks" {
   cluster_role_dependency     = module.iam.eks_role_depends_on
   vpc_id                      = module.vpc.vpc_id
   depends_on = [module.vpc]
+}
 
 resource "kubernetes_config_map" "aws_auth" {
   depends_on = [module.eks]
@@ -45,7 +46,7 @@ YAML
   }
 }
 
-}
+
 #module "apps" {
 #  source = "./modules/terraform-aws-apps"
 #}
