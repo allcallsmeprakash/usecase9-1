@@ -1,35 +1,4 @@
-data "aws_eks_cluster" "cluster" {
-  name = module.eks.cluster_name
-}
-# Datasource: EKS Cluster Auth 
-data "aws_eks_cluster_auth" "cluster" {
-  name = var.cluster_id
-}
 
-
-# Kubernetes Provider
-provider "kubernetes" {
-  alias                   = "eks"
-  host                   = var.cluster_endpoint
-  cluster_ca_certificate = base64decode(var.cluster_certificate_authority_data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-  depends_on = [
-    module.eks
-  ]
-}
-
-# HELM Provider
-provider "helm" {
-  alias = "eks"
-  kubernetes {
-    host                   = var.cluster_endpoint
-    cluster_ca_certificate = base64decode(var.cluster_certificate_authority_data)
-    token                  = data.aws_eks_cluster_auth.cluster.token
-  }
-  depends_on = [
-    module.eks
-  ]
-}
 
 # Install AWS Load Balancer Controller using HELM
 
