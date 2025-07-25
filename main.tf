@@ -16,8 +16,8 @@ module "eks" {
   source                      = "./modules/terraform-aws-eks"
   private_subnet_ids          = module.vpc.private_subnet_ids
   public_subnet_ids           = module.vpc.public_subnet_ids
-  cluster_role_arn            = module.iam.eks_cluster_role_arn
-  node_role_arn               = module.iam.eks_node_role_arn
+  cluster_role_arn            = var.eks_cluster_role_arn
+  node_role_arn               = var.iam.eks_node_role_arn
   eks_oidc_root_ca_thumbprint = var.eks_oidc_root_ca_thumbprint
   cluster_role_dependency     = module.iam.eks_role_depends_on
   vpc_id                      = module.vpc.vpc_id
