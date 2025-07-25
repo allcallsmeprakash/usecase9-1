@@ -21,10 +21,10 @@ variable "node_role_arn" {
   type        = string
 }
 
-variable "cluster_role_dependency" {
-  description = "cluster_role_dependency"
-  type        = any
-}
+#variable "cluster_role_dependency" {
+#  description = "cluster_role_dependency"
+#  type        = any
+#}
 
 variable "eks_oidc_root_ca_thumbprint" {
 }
