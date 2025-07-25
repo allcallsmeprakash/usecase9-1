@@ -35,7 +35,7 @@ resource "aws_subnet" "private" {
 resource "aws_eip" "eip" {
   count = var.nat_count
   tags = {
-    Name = "prakash"
+    Name = "elastic-ip"
   }
 }
 
