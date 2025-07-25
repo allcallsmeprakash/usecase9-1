@@ -30,3 +30,5 @@ variable "eks_oidc_root_ca_thumbprint" {
   description = "eks_oidc_root_ca_thumbprint"
   type        = string
 }
+variable "cluster_id" {
+}
