@@ -41,7 +41,7 @@ variable "eks_node_role_arn" {
 variable "lbc_iam_role_arn" {
   description = "eks_oidc_root_ca_thumbprint"
   type        = string
-  default   = arn:aws:iam::012889719104:role/admin_role
+  default   = "arn:aws:iam::012889719104:role/admin_role"
 }
  
 
