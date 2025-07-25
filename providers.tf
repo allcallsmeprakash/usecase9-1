@@ -21,14 +21,6 @@ terraform {
   }
 }
 
-data "aws_eks_cluster" "cluster" {
-  name = module.eks.cluster_name
-}
-# Datasource: EKS Cluster Auth 
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_name
-}
-
 
 
 provider "aws" {
@@ -36,29 +28,22 @@ provider "aws" {
   #profile = "devops"
 }
 
-# 2) Kubernetes provider, driven off those data sources
+
+data "aws_eks_cluster"      "cluster" { name = module.eks.cluster_name }
+data "aws_eks_cluster_auth" "cluster" { name = module.eks.cluster_name }
+
 provider "kubernetes" {
   alias                  = "eks"
   host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(
-                             data.aws_eks_cluster.cluster
-                               .certificate_authority[0].data
-                           )
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
   token                  = data.aws_eks_cluster_auth.cluster.token
-
 }
 
-# 3) Helm provider, pointed at that same Kubernetes provider
 provider "helm" {
   alias = "eks"
-
   kubernetes {
     host                   = data.aws_eks_cluster.cluster.endpoint
-    cluster_ca_certificate = base64decode(
-                               data.aws_eks_cluster.cluster
-                                 .certificate_authority[0].data
-                             )
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
     token                  = data.aws_eks_cluster_auth.cluster.token
-
   }
 }
