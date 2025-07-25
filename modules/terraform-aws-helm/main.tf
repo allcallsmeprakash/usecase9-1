@@ -17,7 +17,7 @@ terraform {
 
 # Resource: Helm Release 
 resource "helm_release" "loadbalancer_controller" {
-  depends_on = [var.lbc_iam_depends_on]
+  #depends_on = [var.lbc_iam_depends_on]
   name       = "aws-load-balancer-controller"
 
   repository = "https://aws.github.io/eks-charts"
