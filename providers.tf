@@ -30,31 +30,35 @@ data "aws_eks_cluster_auth" "cluster" {
 }
 
 
-# Kubernetes Provider
-provider "kubernetes" {
-  alias                   = "eks"
-  host                   = var.cluster_endpoint
-  cluster_ca_certificate = base64decode(var.cluster_certificate_authority_data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-  depends_on = [
-    module.eks
-  ]
-}
-
-# HELM Provider
-provider "helm" {
-  alias = "eks"
-  kubernetes {
-    host                   = var.cluster_endpoint
-    cluster_ca_certificate = base64decode(var.cluster_certificate_authority_data)
-    token                  = data.aws_eks_cluster_auth.cluster.token
-  }
-  depends_on = [
-    module.eks
-  ]
-}
 
 provider "aws" {
   region  = var.region
   #profile = "devops"
+}
+
+# 2) Kubernetes provider, driven off those data sources
+provider "kubernetes" {
+  alias                  = "eks"
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(
+                             data.aws_eks_cluster.cluster
+                               .certificate_authority[0].data
+                           )
+  token                  = data.aws_eks_cluster_auth.cluster.token
+  load_config_file       = false
+}
+
+# 3) Helm provider, pointed at that same Kubernetes provider
+provider "helm" {
+  alias = "eks"
+
+  kubernetes {
+    host                   = data.aws_eks_cluster.cluster.endpoint
+    cluster_ca_certificate = base64decode(
+                               data.aws_eks_cluster.cluster
+                                 .certificate_authority[0].data
+                             )
+    token                  = data.aws_eks_cluster_auth.cluster.token
+    load_config_file       = false
+  }
 }
