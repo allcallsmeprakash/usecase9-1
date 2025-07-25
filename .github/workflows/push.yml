@@ -96,7 +96,7 @@ jobs:
 
       - name: Terraform Apply (remaining resources)
         if: steps.plan.outcome == 'success'
-        run: terraform apply  -auto-approve
+        run: terraform destroy  -auto-approve
 
 
 
