@@ -1,4 +1,4 @@
-module "vpc" {
+#module "vpc" {
   source         = "./modules/terraform-aws-vpc"
   vpc_cidr       = var.vpc_cidr
   pub_sub_count  = var.pub_sub_count
@@ -22,6 +22,26 @@ module "eks" {
   cluster_role_dependency     = module.iam.eks_role_depends_on
   vpc_id                      = module.vpc.vpc_id
   depends_on = [module.vpc]
+
+resource "kubernetes_config_map" "aws_auth" {
+  depends_on = [module.eks]
+  metadata { name = "aws-auth"; namespace = "kube-system" }
+  data = {
+    mapRoles = <<YAML
+- rolearn: ${module.eks.node_role_arn}
+  username: system:node:{{EC2PrivateDNSName}}
+  groups:
+    - system:bootstrappers
+    - system:nodes
+# (optional) your debug role:
+- rolearn: arn:aws:iam::012889719104:role/admin_role
+  username: admin
+  groups:
+    - system:masters
+YAML
+  }
+}
+
 }
 #module "apps" {
 #  source = "./modules/terraform-aws-apps"
@@ -38,8 +58,8 @@ module "iam" {
 module "helm" {
   source                             = "./modules/terraform-aws-helm"
   cluster_id                         = module.eks.cluster_id
-  cluster_endpoint                   = module.eks.cluster_endpoint
-  cluster_certificate_authority_data = module.eks.cluster_certificate_authority_data
+  #cluster_endpoint                   = module.eks.cluster_endpoint
+  #cluster_certificate_authority_data = module.eks.cluster_certificate_authority_data
   lbc_iam_depends_on                 = module.iam.lbc_iam_depends_on
   lbc_iam_role_arn                   = module.iam.lbc_iam_role_arn
   vpc_id                             = module.vpc.vpc_id
