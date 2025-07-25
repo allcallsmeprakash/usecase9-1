@@ -1,4 +1,4 @@
-#module "vpc" {
+module "vpc" {
   source         = "./modules/terraform-aws-vpc"
   vpc_cidr       = var.vpc_cidr
   pub_sub_count  = var.pub_sub_count
@@ -25,7 +25,10 @@ module "eks" {
 
 resource "kubernetes_config_map" "aws_auth" {
   depends_on = [module.eks]
-  metadata { name = "aws-auth"; namespace = "kube-system" }
+  metadata {
+    name      = "aws-auth"
+    namespace = "kube-system"
+  }
   data = {
     mapRoles = <<YAML
 - rolearn: ${module.eks.node_role_arn}
