@@ -96,7 +96,7 @@ jobs:
 
       - name: Terraform Apply (remaining resources)
         if: steps.plan.outcome == 'success'
-        run: terraform apply tfplan.binary -auto-approve
+        run: terraform apply  -auto-approve
 
 
 
