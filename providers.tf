@@ -26,7 +26,7 @@ data "aws_eks_cluster" "cluster" {
 }
 # Datasource: EKS Cluster Auth 
 data "aws_eks_cluster_auth" "cluster" {
-  name = var.cluster_id
+  name = module.eks.cluster_name
 }
 
 
