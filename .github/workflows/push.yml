@@ -2,7 +2,7 @@ name: Build and Push to Eks
 on:
   # push:
   #   paths:
-  #     - '.github/workflows/apply.yaml'
+  #     - '.github/workflows/apply.yaml'.
   workflow_dispatch:
 
 permissions:
